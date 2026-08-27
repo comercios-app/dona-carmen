@@ -4,7 +4,7 @@ import Cart from "./components/Cart"
 import ProductCard from "./components/ProductCard"
 import { productos } from "./data/productos"
 
-// const WHATSAPP_NUMBER = "5493513200735" // Activar al publicar la recepción de pedidos.
+const WHATSAPP_NUMBER = "5493513200735"
 
 function App() {
   const [cart, setCart] = useState([])
@@ -139,7 +139,7 @@ function App() {
     ].join("\n")
 
     const encodedMessage = encodeURIComponent(message)
-    window.open(`https://wa.me/?text=${encodedMessage}`, "_blank")
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, "_blank")
   }
 
   const showShareFeedback = (message) => {

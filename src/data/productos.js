@@ -24,14 +24,14 @@ export const productos = [
   {
     id: 3,
     nombre: "Empanadas x 12",
-    precio: 20000,
+    precio: 22000,
     categoria: "Empanadas",
     imagen: empanadasImg,
   },
   {
     id: 4,
     nombre: "Empanadas x 6",
-    precio: 10500,
+    precio: 11500,
     categoria: "Empanadas",
     imagen: empanadasImg,
   },
