@@ -10,14 +10,14 @@ export const productos = [
   {
     id: 1,
     nombre: "Hamburguesa",
-    precio: 11000,
+    precio: 12000,
     categoria: "Hamburguesas",
     imagen: hamburguesaImg,
   },
   {
     id: 2,
     nombre: "Lomito",
-    precio: 13000,
+    precio: 14000,
     categoria: "Lomitos",
     imagen: lomitoImg,
   },
@@ -45,7 +45,7 @@ export const productos = [
   {
     id: 6,
     nombre: "Jamon y queso - Unidad",
-    precio: 2000,
+    precio: 2200,
     categoria: "Sanguches de Miga",
     imagen: sanguchesImg,
   },
@@ -66,7 +66,7 @@ export const productos = [
   {
     id: 9,
     nombre: "Ternera y queso - Unidad",
-    precio: 2500,
+    precio: 3000,
     categoria: "Sanguches de Miga",
     imagen: sanguchesImg,
   },
@@ -87,7 +87,7 @@ export const productos = [
   {
     id: 12,
     nombre: "Salame y queso - Unidad",
-    precio: 2000,
+    precio: 2200,
     categoria: "Sanguches de Miga",
     imagen: sanguchesImg,
   },
@@ -108,7 +108,7 @@ export const productos = [
   {
     id: 15,
     nombre: "Jamon, tomate y huevo - Unidad",
-    precio: 2000,
+    precio: 3000,
     categoria: "Sanguches de Miga",
     imagen: sanguchesImg,
   },
@@ -129,7 +129,7 @@ export const productos = [
   {
     id: 18,
     nombre: "Roquefort, rucula y tomate cherry - Unidad",
-    precio: 2500,
+    precio: 3000,
     categoria: "Sanguches de Miga",
     imagen: sanguchesImg,
   },
@@ -150,7 +150,7 @@ export const productos = [
   {
     id: 21,
     nombre: "Ternera, morron y aceitunas - Unidad",
-    precio: 2500,
+    precio: 3000,
     categoria: "Sanguches de Miga",
     imagen: sanguchesImg,
   },
@@ -171,7 +171,7 @@ export const productos = [
   {
     id: 24,
     nombre: "Bondiola y queso - Unidad",
-    precio: 2500,
+    precio: 3000,
     categoria: "Sanguches de Miga",
     imagen: sanguchesImg,
   },
@@ -192,7 +192,7 @@ export const productos = [
   {
     id: 27,
     nombre: "Pollo, lechuga, tomate y huevo - Unidad",
-    precio: 2500,
+    precio: 3000,
     categoria: "Sanguches de Miga",
     imagen: sanguchesImg,
   },
@@ -213,14 +213,14 @@ export const productos = [
   {
     id: 30,
     nombre: "Sanguche de milanesa",
-    precio: 13000,
+    precio: 14000,
     categoria: "Sanguche de Milanesa",
     imagen: lomitoImg,
   },
   {
     id: 31,
     nombre: "Pizza Muzza",
-    precio: 10000,
+    precio: 11000,
     categoria: "Pizzas",
     imagen: pizzaMuzarellaImg,
   },
@@ -233,24 +233,17 @@ export const productos = [
   },
   {
     id: 33,
-    nombre: "Pizza rapida x 1",
-    precio: 6500,
+    nombre: "Pizza rápida muzzarella para llevar",
+    precio: 8000,
     categoria: "Pizzas",
     imagen: pizzaMuzarellaImg,
   },
   {
-    id: 34,
-    nombre: "Pizza rapida x 2",
-    precio: 12000,
+    id: 43,
+    nombre: "Pizza rápida especial para llevar",
+    precio: 11000,
     categoria: "Pizzas",
-    imagen: pizzaMuzarellaImg,
-  },
-  {
-    id: 35,
-    nombre: "Pizza rapida x 4",
-    precio: 22000,
-    categoria: "Pizzas",
-    imagen: pizzaMuzarellaImg,
+    imagen: pizzaEspecialImg,
   },
   {
     id: 36,
