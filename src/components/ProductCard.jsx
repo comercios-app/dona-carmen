@@ -1,8 +1,11 @@
+import ProductPhoto from "./ProductPhoto"
+
 function ProductCard({ producto, onAdd, wasJustAdded }) {
   return (
     <div className="bg-zinc-800 rounded-2xl overflow-hidden shadow-lg border border-zinc-700">
-      <img
+      <ProductPhoto
         src={producto.imagen}
+        fallback={producto.originalImage}
         alt={producto.nombre}
         className="w-full h-48 object-cover"
       />

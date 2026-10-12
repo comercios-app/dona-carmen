@@ -1,6 +1,14 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { parsePrice, mergePrices, reconcileCart } from '../src/lib/prices.js'
+import { imageDimensions } from '../src/lib/imageCompression.js'
+
+test('fotos: conserva proporción, limita el lado mayor y no amplía', () => {
+  assert.deepEqual(imageDimensions(4000, 3000), { width: 1200, height: 900 })
+  assert.deepEqual(imageDimensions(3000, 4000), { width: 900, height: 1200 })
+  assert.deepEqual(imageDimensions(320, 200), { width: 320, height: 200 })
+  assert.throws(() => imageDimensions(0, 100))
+})
 
 test('precios: rechaza formatos ambiguos, negativos y fuera de rango', () => {
   for (const value of ['', '-1', '0', '2.200', '2,200', '1e3', '10000001', 'Infinity']) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { fetchPrices, savePrices, supabase } from "../lib/supabase"
+import { fetchPrices, productImagesEnabled, savePrices, supabase } from "../lib/supabase"
+import ProductImageEditor from "./ProductImageEditor"
 import { money, parsePrice } from "../lib/prices"
 
 const field = "w-full rounded-xl border border-zinc-600 bg-zinc-900 p-3 text-white"
@@ -76,7 +77,7 @@ export default function Admin() {
   return <main className="min-h-screen bg-zinc-950 p-4 text-white sm:p-8">
     <div className="mx-auto max-w-5xl">
       <a href={import.meta.env.BASE_URL} className="text-orange-300">← Volver al menú</a>
-      <h1 className="mt-6 text-3xl font-bold">Precios de Doña Carmen</h1>
+      <h1 className="mt-6 text-3xl font-bold">Productos de Doña Carmen</h1>
       <p className="mt-2 text-zinc-400">Administración</p>
       {notice && <p role="status" className="my-4 rounded-xl border border-orange-400 p-4">{notice}</p>}
       {!supabase ? <p className="mt-6">La administración todavía no está configurada.</p>
@@ -196,6 +197,7 @@ function PriceEditor() {
     {busy && <p role="status">Procesando…</p>}
     {allowed && <>
       <p className="mb-4 text-zinc-300">Cada presentación se modifica por separado. Los sánguches de media docena y docena mantienen el precio por sánguche.</p>
+      {productImagesEnabled && <p className="mb-4 text-zinc-300">Las fotos se guardan por separado de los precios. Elegí una foto JPG, PNG o WebP: se reducirá automáticamente antes de subirla.</p>}
       <div className="mb-5 grid gap-3 sm:grid-cols-2">
         <label>Buscar producto<input className={field} type="search" value={search} onChange={(e) => setSearch(e.target.value)} /></label>
         <label>Categoría<select className={field} value={category} onChange={(e) => setCategory(e.target.value)}><option value="">Todas</option>{[...new Set(products.map((p) => p.categoria))].map((c) => <option key={c}>{c}</option>)}</select></label>
@@ -204,6 +206,7 @@ function PriceEditor() {
         {visible.map((p) => <div key={p.id} className="grid items-center gap-3 rounded-xl bg-zinc-800 p-4 sm:grid-cols-[1fr_12rem]">
           <div><p className="font-semibold">{p.nombre}</p><p className="text-sm text-zinc-400">{p.categoria} · Actual: {money(p.precio)}</p></div>
           <label className="text-sm">Nuevo precio ($)<input aria-label={`Precio de ${p.nombre}`} className={field} inputMode="numeric" value={drafts[p.id] ?? String(p.precio)} onChange={(e) => edit(p.id, e.target.value)} /></label>
+          {productImagesEnabled && <ProductImageEditor product={p} disabled={busy} onSaved={(id, image) => setProducts((current) => current.map((product) => product.id === id ? { ...product, ...image } : product))} />}
         </div>)}
         {!visible.length && <p>No hay productos que coincidan.</p>}
       </fieldset>

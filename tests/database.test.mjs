@@ -59,6 +59,43 @@ test('Postgres: permisos, historial, conflictos, validación y guardado atómico
     // Restaurar se registra como un nuevo cambio.
     await save([{ id: 3, price: 25000, expected_version: 2 }])
     assert.equal((await db.query('select version from public.product_prices where id = 3')).rows[0].version, 3)
+    // Simula las tablas y permisos base que aporta Supabase Storage.
+    await db.exec('reset role')
+    await db.exec(`
+      create schema storage;
+      grant usage on schema storage to anon, authenticated;
+      create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+      create table storage.objects (bucket_id text, name text, primary key(bucket_id, name));
+      alter table storage.objects enable row level security;
+      grant select, insert, update, delete on storage.objects to anon, authenticated;
+    `)
+    await db.exec(await sql('04-images.sql'))
+    await db.exec(await sql('04-images.sql'))
+    const first = '3/00000000-0000-0000-0000-000000000001.webp'
+    const second = '3/00000000-0000-0000-0000-000000000002.webp'
+    const imageSave = (path, version) => db.query('select public.save_product_image(3, $1, $2) as result', [path, version])
+    await db.exec('set role anon')
+    assert.equal((await db.query('select * from public.product_images')).rows.length, 41)
+    await assert.rejects(imageSave(null, 1), /permission denied/)
+    await db.exec('reset role; set role authenticated')
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [other])
+    await assert.rejects(imageSave(null, 1), /NOT_ADMIN/)
+    await assert.rejects(db.query("insert into storage.objects values ('product-images', $1)", [first]), /row-level security/)
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [admin])
+    await assert.rejects(imageSave(first, 1), /IMAGE_NOT_UPLOADED/)
+    await db.query("insert into storage.objects values ('product-images', $1), ('product-images', $2)", [first, second])
+    assert.equal((await imageSave(first, 1)).rows[0].result.version, 2)
+    await assert.rejects(imageSave(second, 1), /IMAGE_CONFLICT/)
+    // No se puede borrar la imagen activa, ni sobrescribir su archivo.
+    assert.equal((await db.query('delete from storage.objects returning *')).rows.length, 1)
+    assert.equal((await db.query('select name from storage.objects')).rows[0].name, first)
+    assert.equal((await db.query("update storage.objects set name = 'replaced.webp' returning *")).rows.length, 0)
+    await db.query("insert into storage.objects values ('product-images', $1)", [second])
+    assert.equal((await imageSave(second, 2)).rows[0].result.previous_path, first)
+    await assert.rejects(imageSave(first, 3), /duplicate key/)
+    assert.equal((await db.query('delete from storage.objects returning *')).rows.length, 1)
+    assert.equal((await imageSave(null, 3)).rows[0].result.previous_path, second)
+    assert.equal((await db.query('delete from storage.objects returning *')).rows.length, 1)
     await db.exec('reset role')
     await db.exec(await sql('02-prices.sql'))
     assert.equal((await db.query('select version from public.product_prices where id = 3')).rows[0].version, 3)

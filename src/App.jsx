@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 
 import Cart from "./components/Cart"
 import ProductCard from "./components/ProductCard"
+import ProductPhoto from "./components/ProductPhoto"
 import { productos as initialProducts } from "./data/productos"
 import { trackWhatsAppOrderClick } from "./analytics.js"
 import { fetchPrices, livePricesEnabled } from "./lib/supabase"
@@ -284,8 +285,9 @@ function App() {
                     onClick={() => handleCategorySelect(categoria)}
                     className="group relative overflow-hidden rounded-[2rem] border border-zinc-700 bg-zinc-800 text-left shadow-lg transition duration-150 hover:-translate-y-1 hover:border-orange-500 active:translate-y-0 active:scale-[0.97] active:border-orange-500"
                   >
-                    <img
+                    <ProductPhoto
                       src={categoryProduct?.imagen}
+                      fallback={categoryProduct?.originalImage}
                       alt={categoria}
                       className="h-40 w-full object-cover transition duration-500 group-hover:scale-105"
                     />
