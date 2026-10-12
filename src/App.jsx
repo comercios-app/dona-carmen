@@ -1,12 +1,30 @@
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import Cart from "./components/Cart"
 import ProductCard from "./components/ProductCard"
-import { productos } from "./data/productos"
+import { productos as initialProducts } from "./data/productos"
+import { trackWhatsAppOrderClick } from "./analytics.js"
+import { fetchPrices, livePricesEnabled } from "./lib/supabase"
+import { reconcileCart } from "./lib/prices"
 
 const WHATSAPP_NUMBER = "5493513200735"
 
 function App() {
+  const [productos, setProductos] = useState(initialProducts)
+  const [pricesReady, setPricesReady] = useState(!livePricesEnabled)
+  const [priceError, setPriceError] = useState("")
+  const [priceAttempt, setPriceAttempt] = useState(0)
+  const [checkingPrices, setCheckingPrices] = useState(false)
+  const [orderNotice, setOrderNotice] = useState("")
+  const sendingRef = useRef(false)
+  useEffect(() => {
+    if (!livePricesEnabled) return
+    let active = true
+    fetchPrices().then((products) => {
+      if (active) { setProductos(products); setPricesReady(true); setPriceError("") }
+    }).catch((error) => { if (active) setPriceError(error.message) })
+    return () => { active = false }
+  }, [priceAttempt])
   const [cart, setCart] = useState([])
   const [customerName, setCustomerName] = useState("")
   const [orderNotes, setOrderNotes] = useState("")
@@ -28,14 +46,15 @@ function App() {
     const prioritized = ["Sanguches de Miga"]
     const rest = uniqueCategories.filter((categoria) => !prioritized.includes(categoria))
     return [...prioritized.filter((categoria) => uniqueCategories.includes(categoria)), ...rest]
-  }, [])
+  }, [productos])
 
   const filteredProducts = useMemo(() => {
     if (!selectedCategory) return []
     return productos.filter((producto) => producto.categoria === selectedCategory)
-  }, [selectedCategory])
+  }, [selectedCategory, productos])
 
   const addToCart = (producto) => {
+    if (sendingRef.current) return
     setCart((prev) => {
       const existing = prev.find((item) => item.id === producto.id)
       if (!existing) {
@@ -109,8 +128,8 @@ function App() {
     }
   }
 
-  const handleSendWhatsApp = () => {
-    if (cart.length === 0) return
+  const handleSendWhatsApp = async () => {
+    if (cart.length === 0 || sendingRef.current) return
 
     const name = customerName.trim()
     const notes = orderNotes.trim()
@@ -120,26 +139,48 @@ function App() {
 
     if (!name || (isDelivery && !address)) return
 
-    const message = [
-      "Hola! Quisiera hacer un pedido:",
-      `Nombre: ${name}`,
-      "",
-      ...cart.map(
-        (item) => `${item.cantidad} x ${item.nombre} - $${item.precio * item.cantidad}`
-      ),
-      "",
-      `Entrega: ${deliveryMethod}`,
-      ...(isDelivery ? [`Dirección: ${address}`, "Costo de envío: a confirmar"] : []),
-      `Forma de pago: ${paymentMethod}`,
-      ...(paymentMethod === "Efectivo" && cashPayment ? [`Abono con: $${cashPayment}`] : []),
-      ...(notes ? [`Aclaraciones: ${notes}`] : []),
-      "",
-      `Total: $${total}`,
-      "Gracias!"
-    ].join("\n")
+    sendingRef.current = true
+    setCheckingPrices(true)
+    setOrderNotice("")
+    try {
+      if (livePricesEnabled) {
+        const latest = await fetchPrices()
+        const checked = reconcileCart(cart, latest)
+        setProductos(latest)
+        if (checked.changed) {
+          setCart(checked.items)
+          setOrderNotice("Se actualizaron algunos precios. Revisá el nuevo total y volvé a tocar Enviar por WhatsApp.")
+          return
+        }
+      }
 
-    const encodedMessage = encodeURIComponent(message)
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, "_blank")
+      const message = [
+        "Hola! Quisiera hacer un pedido:",
+        `Nombre: ${name}`,
+        "",
+        ...cart.map(
+          (item) => `${item.cantidad} x ${item.nombre} - $${item.precio * item.cantidad}`
+        ),
+        "",
+        `Entrega: ${deliveryMethod}`,
+        ...(isDelivery ? [`Dirección: ${address}`, "Costo de envío: a confirmar"] : []),
+        `Forma de pago: ${paymentMethod}`,
+        ...(paymentMethod === "Efectivo" && cashPayment ? [`Abono con: $${cashPayment}`] : []),
+        ...(notes ? [`Aclaraciones: ${notes}`] : []),
+        "",
+        `Total: $${total}`,
+        "Gracias!"
+      ].join("\n")
+
+      const encodedMessage = encodeURIComponent(message)
+      trackWhatsAppOrderClick()
+      window.location.assign(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`)
+    } catch (error) {
+      setOrderNotice(error.message)
+    } finally {
+      sendingRef.current = false
+      setCheckingPrices(false)
+    }
   }
 
   const showShareFeedback = (message) => {
@@ -177,6 +218,13 @@ function App() {
       showShareFeedback("No se pudo copiar el enlace")
     }
   }
+
+  if (!pricesReady) return <main className="min-h-screen bg-zinc-900 p-8 text-white">
+    <h1 className="text-3xl font-bold">Doña Carmen</h1>
+    <p role="status" className="my-5">{priceError || "Cargando precios…"}</p>
+    {priceError && <button className="rounded-xl bg-orange-500 p-3" onClick={() => { setPriceError(""); setPriceAttempt((n) => n + 1) }}>Reintentar</button>}
+    <a className="mt-8 block text-zinc-400" href="#/admin">Administración</a>
+  </main>
 
   return (
     <div className="min-h-screen bg-zinc-900 p-6">
@@ -294,6 +342,9 @@ function App() {
           </div>
 
           <div ref={cartRef}>
+            {orderNotice && <p role="status" className="mb-4 rounded-xl border border-orange-400 p-4 text-white">{orderNotice}</p>}
+            {checkingPrices && <p role="status" className="mb-4 text-white">Verificando precios del pedido…</p>}
+            <fieldset disabled={checkingPrices} className="min-w-0">
             <Cart
               cartItems={cart}
               onRemove={removeFromCart}
@@ -314,8 +365,10 @@ function App() {
               onCashAmountChange={setCashAmount}
               onSendWhatsApp={handleSendWhatsApp}
             />
+            </fieldset>
           </div>
         </div>
+        <footer className="mt-8 text-center"><a href="#/admin" className="text-sm text-zinc-400 underline">Administración</a></footer>
         {showCartNotifier && (
           <button
             type="button"
