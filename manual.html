@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manual de administración · Doña Carmen</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #25221f; background: #faf7f2; line-height: 1.65; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 850px; margin: auto; padding: 32px 24px 64px; }
+    h1, h2, h3 { line-height: 1.25; }
+    h1 { font-size: clamp(2rem, 6vw, 3rem); margin-bottom: 12px; }
+    h2 { margin-top: 0; font-size: 1.5rem; }
+    h3 { font-size: 1.1rem; }
+    a { color: #934000; text-underline-offset: 3px; }
+    a:focus-visible { outline: 3px solid #934000; outline-offset: 4px; }
+    header { border-bottom: 3px solid #e97616; padding-bottom: 24px; }
+    .brand { font-weight: 700; color: #934000; letter-spacing: .08em; text-transform: uppercase; }
+    .actions { display: flex; flex-wrap: wrap; gap: 16px; }
+    nav, section { background: white; border: 1px solid #e4dbcf; border-radius: 14px; padding: 24px; margin-top: 24px; scroll-margin-top: 20px; }
+    nav ol { columns: 2; column-gap: 32px; }
+    li { margin: 8px 0; }
+    ol, ul { padding-left: 24px; }
+    .note { background: #fff3de; border-left: 4px solid #bd5a00; padding: 14px 18px; }
+    .muted { color: #61594f; }
+    footer { margin-top: 24px; }
+    @media (max-width: 550px) { main { padding: 24px 16px; } nav, section { padding: 20px; } nav ol { columns: 1; } }
+    @media print {
+      :root { background: white; font-size: 11pt; }
+      main { max-width: none; padding: 0; }
+      .actions, nav { display: none; }
+      section { border: 0; border-radius: 0; padding: 0; margin-top: 24px; }
+      h2, h3 { break-after: avoid; }
+      li, .note { break-inside: avoid; }
+      a { color: inherit; }
+      @page { margin: 18mm; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="brand">Doña Carmen</p>
+    <h1>Manual de uso del panel</h1>
+    <p>Guía para administrar el menú: productos, categorías, precios y fotos.</p>
+    <div class="actions"><a href="./#/admin">Ir al panel de administración</a><a href="./" target="_blank" rel="noopener noreferrer">Abrir el menú para comprobar cambios</a></div>
+    <p class="muted">Para compartir esta guía, copiá su dirección. Para imprimirla o guardarla como PDF, usá la opción <strong>Imprimir</strong> del navegador (Ctrl + P en una computadora).</p>
+  </header>
+
+  <nav aria-label="Contenido del manual">
+    <strong>¿Qué necesitás hacer?</strong>
+    <ol>
+      <li><a href="#ingresar">Ingresar al panel</a></li>
+      <li><a href="#categorias">Crear o editar una categoría</a></li>
+      <li><a href="#productos">Crear un producto</a></li>
+      <li><a href="#editar">Editar o mover un producto</a></li>
+      <li><a href="#precios">Cambiar precios</a></li>
+      <li><a href="#fotos">Cambiar fotos</a></li>
+      <li><a href="#archivar">Archivar y recuperar</a></li>
+      <li><a href="#orden">Ordenar el menú</a></li>
+      <li><a href="#acceso">Recuperar la contraseña</a></li>
+      <li><a href="#dudas">Resolver dudas frecuentes</a></li>
+    </ol>
+  </nav>
+
+  <section id="ingresar">
+    <h2>1. Ingresar al panel</h2>
+    <ol>
+      <li>Abrí <a href="https://comercios-app.github.io/dona-carmen/#/admin">https://comercios-app.github.io/dona-carmen/#/admin</a>.</li>
+      <li>Completá <strong>Correo</strong> y <strong>Contraseña</strong> con tu cuenta habilitada.</li>
+      <li>Tocá <strong>Ingresar</strong>.</li>
+    </ol>
+    <p>Al terminar, tocá <strong>Cerrar sesión</strong>, especialmente si usás un dispositivo compartido.</p>
+    <p class="note">Los cambios se publican al guardarlos. No hace falta entrar a Supabase ni pedir una nueva publicación del sitio. Para comprobarlos, abrí el menú y recargá la página.</p>
+  </section>
+
+  <section id="categorias">
+    <h2>2. Crear o editar una categoría</h2>
+    <p>Una categoría agrupa productos, por ejemplo: Pizzas, Empanadas o Bebidas.</p>
+    <ol>
+      <li>Tocá <strong>Nueva categoría</strong>.</li>
+      <li>Escribí el <strong>Nombre</strong> y elegí el <strong>Orden de aparición</strong>. Los números menores aparecen primero.</li>
+      <li>Dejá sin marcar <strong>Archivado (oculto en el menú)</strong>.</li>
+      <li>Tocá <strong>Revisar alta</strong> y después <strong>Confirmar y guardar</strong>.</li>
+    </ol>
+    <p class="note">Una categoría vacía no aparece en el menú de los clientes. Se mostrará cuando tenga al menos un producto sin archivar.</p>
+    <p>Para cambiar su nombre u orden, abrí <strong>Administrar categorías</strong>, buscala y tocá <strong>Editar / archivar</strong>. Modificá los datos y elegí <strong>Revisar cambios → Confirmar y guardar</strong>.</p>
+  </section>
+
+  <section id="productos">
+    <h2>3. Crear un producto</h2>
+    <p>Si la categoría ya existe, usala. Si todavía no existe, creala primero siguiendo el paso anterior.</p>
+    <ol>
+      <li>Tocá <strong>Nuevo producto</strong>.</li>
+      <li>Completá el <strong>Nombre</strong> y seleccioná la <strong>Categoría del producto</strong>.</li>
+      <li>Ingresá el <strong>Precio ($)</strong> en pesos enteros, sin puntos, comas ni símbolo $. Por ejemplo, para $3.000 escribí <strong>3000</strong>.</li>
+      <li>Elegí el <strong>Orden de aparición</strong> y dejá sin marcar <strong>Archivado (oculto en el menú)</strong>.</li>
+      <li>Tocá <strong>Revisar alta → Confirmar y guardar</strong>.</li>
+      <li>Buscá el producto en la lista para cargar su foto. Mientras no tenga foto, mostrará una imagen de “Foto pendiente”.</li>
+    </ol>
+    <p>Ejemplo: creá la categoría “Bebidas” y luego el producto “Agua mineral”, seleccionando “Bebidas” como categoría.</p>
+  </section>
+
+  <section id="editar">
+    <h2>4. Editar o mover un producto</h2>
+    <ol>
+      <li>Encontralo con <strong>Buscar producto</strong> o el filtro <strong>Categoría</strong>.</li>
+      <li>Tocá <strong>Editar / archivar producto</strong>.</li>
+      <li>Modificá el nombre, precio u orden. Para moverlo, elegí otra <strong>Categoría del producto</strong>.</li>
+      <li>Tocá <strong>Revisar cambios → Confirmar y guardar</strong>.</li>
+    </ol>
+    <p>Al mover un producto se conserva su foto. No necesitás crearlo de nuevo.</p>
+  </section>
+
+  <section id="precios">
+    <h2>5. Cambiar uno o varios precios</h2>
+    <ol>
+      <li>Buscá los productos que querés actualizar.</li>
+      <li>En cada uno, cambiá <strong>Nuevo precio ($)</strong>. Escribí solo números: por ejemplo, <strong>13000</strong>.</li>
+      <li>Tocá <strong>Revisar cambios</strong>.</li>
+      <li>Revisá la lista de precios anteriores y nuevos.</li>
+      <li>Tocá <strong>Guardar precios</strong> y esperá el mensaje de confirmación.</li>
+    </ol>
+    <p class="note">Cada presentación se modifica por separado: cambiar una unidad no cambia automáticamente la media docena ni la docena. En los sánguches de media docena y docena se mantiene el criterio existente de precio por sánguche.</p>
+    <h3>Volver a un precio anterior</h3>
+    <p>En <strong>Últimos cambios</strong>, buscá el cambio y tocá <strong>Restaurar</strong> junto al importe deseado. Esto solo prepara el precio: para aplicarlo tenés que tocar <strong>Revisar cambios → Guardar precios</strong>.</p>
+  </section>
+
+  <section id="fotos">
+    <h2>6. Cambiar la foto de un producto</h2>
+    <ol>
+      <li>Buscá el producto y, en <strong>Cambiar foto de…</strong>, seleccioná una imagen del dispositivo.</li>
+      <li>Esperá a que se prepare. Se aceptan JPG, PNG y WebP de hasta 20 MB; la imagen se reduce y comprime automáticamente antes de subirla.</li>
+      <li>Revisá la vista previa. Todavía no está publicada.</li>
+      <li>Tocá <strong>Guardar foto</strong> y esperá la confirmación.</li>
+    </ol>
+    <p><strong>Cancelar foto</strong> descarta la selección y conserva la foto actual. Las fotos se guardan por separado de los precios.</p>
+    <p>En los productos que tenían una foto original del sitio, podés usar <strong>Volver a la foto original</strong>. En los productos nuevos, <strong>Quitar foto</strong> vuelve a mostrar “Foto pendiente”.</p>
+    <p>No hay un historial para recuperar todas las fotos subidas: al reemplazar una foto cargada, se elimina el archivo anterior cuando el proceso termina correctamente. Conservá en tu dispositivo las fotos que quieras reutilizar.</p>
+  </section>
+
+  <section id="archivar">
+    <h2>7. Archivar y recuperar</h2>
+    <p><strong>Archivar significa ocultar del menú sin borrar definitivamente.</strong> El producto conserva sus datos y su foto para que puedas recuperarlo. Sirve, por ejemplo, cuando dejás de vender algo por un tiempo.</p>
+    <p>El panel no tiene un botón de borrado definitivo. Para retirar un producto o una categoría del menú se usa el archivado.</p>
+    <h3>Archivar un producto</h3>
+    <ol>
+      <li>Tocá <strong>Editar / archivar producto</strong>.</li>
+      <li>Marcá <strong>Archivado (oculto en el menú)</strong>.</li>
+      <li>Tocá <strong>Revisar cambios → Confirmar y guardar</strong>.</li>
+    </ol>
+    <h3>Archivar una categoría</h3>
+    <ol>
+      <li>Primero archivá todos sus productos visibles, o movelos a otra categoría si querés que sigan a la venta.</li>
+      <li>Abrí <strong>Administrar categorías</strong> y tocá <strong>Editar / archivar</strong> en esa categoría.</li>
+      <li>Marcá <strong>Archivado (oculto en el menú)</strong> y guardá con <strong>Revisar cambios → Confirmar y guardar</strong>.</li>
+    </ol>
+    <p class="note">Si aparece “Esta categoría todavía tiene productos visibles”, todavía hay productos que debés mover o archivar. Una categoría puede archivarse cuando tiene <strong>0 productos visibles</strong>, aunque conserve productos archivados.</p>
+    <h3>Recuperar una categoría y sus productos</h3>
+    <ol>
+      <li>Si la categoría está archivada, buscala en <strong>Administrar categorías</strong> (aparece con la indicación “Archivada”). Entrá a editarla, quitá la marca de <strong>Archivado</strong> y confirmá los cambios.</li>
+      <li>Activá <strong>Mostrar también productos archivados</strong>. Si no encontrás el producto, borrá el texto de búsqueda y elegí <strong>Todas</strong> en el filtro de categoría.</li>
+      <li>Editá el producto, elegí una categoría activa y quitá la marca de <strong>Archivado</strong>.</li>
+      <li>Tocá <strong>Revisar cambios → Confirmar y guardar</strong>. Repetí para los demás productos que quieras recuperar.</li>
+    </ol>
+    <p class="note">Recuperar una categoría no recupera automáticamente sus productos. El orden es: <strong>para ocultar, productos primero y categoría después; para recuperar, categoría primero y productos después</strong>.</p>
+    <h3>Ejemplo: retirar la categoría “Prueba”</h3>
+    <p>Archivá el producto que creaste dentro de “Prueba”. Después archivá la categoría “Prueba”. Ambos dejarán de aparecer en el menú y quedarán disponibles para recuperarlos desde el panel.</p>
+  </section>
+
+  <section id="orden">
+    <h2>8. Ordenar el menú</h2>
+    <p>Al editar una categoría o un producto, cambiá <strong>Orden de aparición</strong>. Los números menores se muestran primero: 10 antes que 20, y 20 antes que 30.</p>
+    <p>El orden de una categoría define su posición entre las categorías. El orden de un producto define su posición dentro de su categoría. Podés usar 10, 20, 30… para después agregar uno entre dos posiciones, por ejemplo con 15.</p>
+    <p>Guardá con <strong>Revisar cambios → Confirmar y guardar</strong>.</p>
+  </section>
+
+  <section id="acceso">
+    <h2>9. Recuperar o cambiar la contraseña</h2>
+    <ol>
+      <li>En la pantalla de ingreso, escribí tu correo habilitado. Si ya estás dentro del panel, primero cerrá sesión.</li>
+      <li>Tocá <strong>Olvidé mi contraseña</strong>.</li>
+      <li>Abrí el mensaje que recibas por correo. Revisá también spam.</li>
+      <li>Seguí el enlace, escribí una contraseña nueva de al menos 12 caracteres y tocá <strong>Guardar contraseña</strong>.</li>
+    </ol>
+    <p>Si el enlace venció, solicitá uno nuevo. Si tu cuenta no tiene acceso al panel, contactá a quien administra el sitio para que la habilite.</p>
+  </section>
+
+  <section id="dudas">
+    <h2>10. Dudas frecuentes</h2>
+    <h3>Creé una categoría, pero no aparece en el menú</h3>
+    <p>Verificá que no esté archivada y que tenga al menos un producto sin archivar. Una categoría con 0 productos visibles no se muestra. Después recargá el menú.</p>
+    <h3>No encuentro un producto en el panel</h3>
+    <p>Borrá el texto de <strong>Buscar producto</strong>, elegí <strong>Todas</strong> en <strong>Categoría</strong> y activá <strong>Mostrar también productos archivados</strong>.</p>
+    <h3>Cambié algo, pero el menú sigue igual</h3>
+    <p>Comprobá que confirmaste el guardado y recibiste el mensaje de éxito. Escribir un precio o seleccionar una foto no alcanza. Recargá la página del menú; en una computadora podés usar Ctrl + F5.</p>
+    <h3>Aparece que otro administrador modificó los datos</h3>
+    <p>Tomá nota de lo que querías cambiar, cancelá la edición si está abierta y tocá <strong>Recargar precios e historial</strong>. Revisá los datos actualizados antes de volver a editar. Recargar descarta los precios que todavía no guardaste.</p>
+    <h3>El sistema avisa que el nombre ya existe</h3>
+    <p>Revisá también los elementos archivados: podés editar o recuperar el existente. Si se trata de otro elemento, usá un nombre distinto.</p>
+    <h3>¿Cómo compruebo que quedó bien?</h3>
+    <p>Abrí el menú en otra pestaña, recargalo y revisá la categoría, el nombre, el precio y la foto. Antes de cerrar el panel, esperá siempre la confirmación de guardado.</p>
+  </section>
+  <footer class="muted">Manual de uso de Doña Carmen · Actualizado el 13 de octubre de 2026.</footer>
+</main>
+</body>
+</html>
