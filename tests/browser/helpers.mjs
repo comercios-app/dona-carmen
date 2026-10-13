@@ -7,6 +7,10 @@ const mockImage = readFileSync(new URL('../../src/assets/empanadas.webp', import
 export async function mockApi(page, { allowed = true, conflict = false } = {}) {
   const prices = [...source.matchAll(/id: (\d+),\s+nombre: "[^"]+",\s+precio: (\d+)/g)].map((m) => ({ id: Number(m[1]), price: Number(m[2]), version: 1 }))
   const state = { prices, saved: [], history: [], failRead: false, images: prices.map(p => ({ product_id: p.id, image_path: null, version: 1 })), uploads: [], removed: [], imageSaves: [], imageConflict: false, uploadFailure: false }
+  const metadata = [...source.matchAll(/id: (\d+),\s+nombre: "([^"]+)",\s+precio: \d+,\s+categoria: "([^"]+)"/g)]
+  const names = ['Sanguches de Miga', ...new Set(metadata.map(m => m[3]).filter(c => c !== 'Sanguches de Miga'))]
+  state.categories = names.map((name, i) => ({ id: i + 1, name, sort_order: (i + 1) * 10, archived: false, version: 1 }))
+  state.products = metadata.map(m => ({ id: Number(m[1]), name: m[2], category_id: names.indexOf(m[3]) + 1, sort_order: Number(m[1]), archived: false, catalog_version: 1 }))
   await page.route('https://test-project.supabase.co/**', async (route) => {
     const url = new URL(route.request().url())
     const fulfill = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
@@ -18,6 +22,48 @@ export async function mockApi(page, { allowed = true, conflict = false } = {}) {
     if (url.pathname.endsWith('/user')) return fulfill(user)
     if (url.pathname.endsWith('/logout') || url.pathname.endsWith('/recover')) return fulfill({})
     if (url.pathname.endsWith('/is_price_admin')) return fulfill(allowed)
+    if (url.pathname.endsWith('/get_catalog')) {
+      if (state.failRead) return fulfill({ message: 'unavailable' }, 503)
+      const all = route.request().postDataJSON().include_archived
+      if (all && !allowed) return fulfill({ message: 'NOT_ADMIN' }, 403)
+      const categories = state.categories.filter(c => all || !c.archived).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
+      const products = state.products.filter(p => (all || !p.archived) && categories.some(c => c.id === p.category_id)).map(p => {
+        const price = state.prices.find(row => row.id === p.id)
+        const image = state.images.find(row => row.product_id === p.id)
+        return { ...p, price: price.price, version: price.version, image_path: image.image_path, image_version: image.version }
+      }).sort((a, b) => categories.findIndex(c => c.id === a.category_id) - categories.findIndex(c => c.id === b.category_id) || a.sort_order - b.sort_order || a.id - b.id)
+      return fulfill({ categories, products })
+    }
+    if (url.pathname.endsWith('/save_catalog_category')) {
+      const { input } = route.request().postDataJSON()
+      if (state.catalogConflict) return fulfill({ message: 'CATALOG_CONFLICT' }, 400)
+      if (input.archived && state.products.some(p => p.category_id === input.id && !p.archived)) return fulfill({ message: 'CATEGORY_HAS_PRODUCTS' }, 400)
+      if (input.id) {
+        const c = state.categories.find(c => c.id === input.id)
+        Object.assign(c, { name: input.name, sort_order: input.sort_order, archived: input.archived, version: c.version + 1 })
+        return fulfill(c.id)
+      }
+      const id = Math.max(0, ...state.categories.map(c => c.id)) + 1
+      state.categories.push({ id, name: input.name, sort_order: input.sort_order, archived: input.archived, version: 1 })
+      return fulfill(id)
+    }
+    if (url.pathname.endsWith('/save_catalog_product')) {
+      const { input } = route.request().postDataJSON()
+      if (state.catalogConflict) return fulfill({ message: 'CATALOG_CONFLICT' }, 400)
+      if (!input.archived && state.categories.find(c => c.id === input.category_id)?.archived) return fulfill({ message: 'CATEGORY_UNAVAILABLE' }, 400)
+      if (input.id) {
+        const p = state.products.find(p => p.id === input.id)
+        Object.assign(p, { name: input.name, category_id: input.category_id, sort_order: input.sort_order, archived: input.archived, catalog_version: p.catalog_version + 1 })
+        const price = state.prices.find(p => p.id === input.id)
+        if (price.price !== input.price) { price.price = input.price; price.version++ }
+        return fulfill(p.id)
+      }
+      const id = Math.max(0, ...state.products.map(p => p.id)) + 1
+      state.products.push({ id, name: input.name, category_id: input.category_id, sort_order: input.sort_order, archived: input.archived, catalog_version: 1 })
+      state.prices.push({ id, price: input.price, version: 1 })
+      state.images.push({ product_id: id, image_path: null, version: 1 })
+      return fulfill(id)
+    }
     if (url.pathname.endsWith('/product_prices')) return state.failRead ? fulfill({ message: 'unavailable' }, 503) : fulfill(prices)
     if (url.pathname.endsWith('/product_images')) return fulfill(state.images)
     if (url.pathname.startsWith('/storage/v1/object/')) {

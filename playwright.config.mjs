@@ -14,6 +14,7 @@ export default defineConfig({
       VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test_only',
       VITE_LIVE_PRICES: 'true',
       VITE_PRODUCT_IMAGES: 'true',
+      VITE_CATALOG: 'true',
     },
   },
 })

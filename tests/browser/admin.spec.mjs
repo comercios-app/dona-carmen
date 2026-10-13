@@ -51,7 +51,7 @@ test('pedido actualiza total y detiene envío si cambió un precio o falla la co
   expect(page.url()).toContain('127.0.0.1')
   state.failRead = true
   await page.getByRole('button', { name: 'Enviar por WhatsApp' }).click()
-  await expect(page.getByText(/No pudimos consultar los precios/)).toBeVisible({ timeout: 15000 })
+  await expect(page.getByText(/No pudimos consultar (los precios|el catálogo)/)).toBeVisible({ timeout: 15000 })
   expect(page.url()).toContain('127.0.0.1')
 })
 

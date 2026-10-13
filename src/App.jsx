@@ -5,7 +5,7 @@ import ProductCard from "./components/ProductCard"
 import ProductPhoto from "./components/ProductPhoto"
 import { productos as initialProducts } from "./data/productos"
 import { trackWhatsAppOrderClick } from "./analytics.js"
-import { fetchPrices, livePricesEnabled } from "./lib/supabase"
+import { catalogEnabled, fetchPrices, livePricesEnabled } from "./lib/supabase"
 import { reconcileCart } from "./lib/prices"
 
 const WHATSAPP_NUMBER = "5493513200735"
@@ -44,6 +44,7 @@ function App() {
 
   const categorias = useMemo(() => {
     const uniqueCategories = Array.from(new Set(productos.map((producto) => producto.categoria)))
+    if (catalogEnabled) return uniqueCategories
     const prioritized = ["Sanguches de Miga"]
     const rest = uniqueCategories.filter((categoria) => !prioritized.includes(categoria))
     return [...prioritized.filter((categoria) => uniqueCategories.includes(categoria)), ...rest]
@@ -150,7 +151,10 @@ function App() {
         setProductos(latest)
         if (checked.changed) {
           setCart(checked.items)
-          setOrderNotice("Se actualizaron algunos precios. Revisá el nuevo total y volvé a tocar Enviar por WhatsApp.")
+          if (selectedCategory && !latest.some((p) => p.categoria === selectedCategory)) setSelectedCategory(null)
+          setOrderNotice(checked.removed.length
+            ? `Quitamos productos que ya no están disponibles: ${checked.removed.join(', ')}. Revisá tu pedido antes de enviarlo.`
+            : "Se actualizaron algunos precios o nombres. Revisá el nuevo total y volvé a tocar Enviar por WhatsApp.")
           return
         }
       }
@@ -272,6 +276,7 @@ function App() {
         </header>
 
         <div className="mb-8">
+          {!productos.length && <p role="status" className="rounded-xl bg-zinc-800 p-6 text-center text-zinc-300">Por el momento no hay productos disponibles. Volvé a consultar más tarde.</p>}
           {!selectedCategory ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {categorias.map((categoria) => {

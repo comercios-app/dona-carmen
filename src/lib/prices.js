@@ -24,13 +24,14 @@ export function mergePrices(products, rows) {
 export function reconcileCart(cart, products) {
   const byId = new Map(products.map((product) => [product.id, product]))
   let changed = false
-  const items = cart.map((item) => {
+  const removed = []
+  const items = cart.flatMap((item) => {
     const product = byId.get(item.id)
-    if (!product) throw new Error("Un producto del pedido ya no está disponible.")
-    if (product.precio !== item.precio) changed = true
-    return { ...item, precio: product.precio }
+    if (!product) { changed = true; removed.push(item.nombre); return [] }
+    if (product.precio !== item.precio || (product.nombre !== undefined && product.nombre !== item.nombre)) changed = true
+    return [{ ...item, ...product, cantidad: item.cantidad }]
   })
-  return { items, changed }
+  return { items, changed, removed }
 }
 
 export const money = (price) => new Intl.NumberFormat("es-AR", {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { fetchPrices, productImagesEnabled, savePrices, supabase } from "../lib/supabase"
+import { catalogEnabled, fetchCatalog, fetchPrices, productImagesEnabled, savePrices, supabase } from "../lib/supabase"
+import CatalogRecordForm from "./CatalogRecordForm"
 import ProductImageEditor from "./ProductImageEditor"
 import { money, parsePrice } from "../lib/prices"
 
@@ -104,14 +105,17 @@ export default function Admin() {
 async function loadEditorData() {
   const { data: admin, error: authError } = await supabase.rpc("is_price_admin")
   if (authError || !admin) throw new Error("Tu cuenta no tiene acceso al panel, o falta completar la configuración del proyecto.")
-  const products = await fetchPrices()
+  const { products, categories } = catalogEnabled ? await fetchCatalog(true) : { products: await fetchPrices(), categories: [] }
   const { data: history, error } = await supabase.from("price_history").select("id,product_id,old_price,new_price,changed_at,changed_by").order("id", { ascending: false }).limit(100)
   if (error) throw new Error("No se pudo cargar el historial. Intentá nuevamente.")
-  return { products, history }
+  return { products, categories, history }
 }
 
 function PriceEditor() {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [showArchived, setShowArchived] = useState(false)
+  const [editing, setEditing] = useState(null)
   const [drafts, setDrafts] = useState({})
   const [history, setHistory] = useState([])
   const [allowed, setAllowed] = useState(false)
@@ -126,6 +130,7 @@ function PriceEditor() {
       const data = await loadEditorData()
       setAllowed(true)
       setProducts(data.products)
+      setCategories(data.categories)
       setHistory(data.history)
       setDrafts({})
       setReview(null)
@@ -139,6 +144,7 @@ function PriceEditor() {
     loadEditorData().then((data) => {
       if (!active) return
       setProducts(data.products)
+      setCategories(data.categories)
       setHistory(data.history)
       setAllowed(true)
     }).catch((error) => { if (active) setMessage(error.message) })
@@ -190,12 +196,46 @@ function PriceEditor() {
     }
   }
 
-  const visible = products.filter((p) => (!category || category === p.categoria) && p.nombre.toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es")))
+  function openRecord(kind, record = null) {
+    if (dirty && !window.confirm('Se descartarán los precios sin guardar. ¿Continuar?')) return
+    setDrafts({})
+    setReview(null)
+    setEditing({ kind, record })
+  }
+
+  async function catalogSaved(result) {
+    setEditing(null)
+    setBusy(true)
+    const loaded = await load()
+    if (loaded) {
+      setCategory('')
+      setSearch(result.kind === 'product' ? result.name : '')
+      setShowArchived(result.archived)
+      setMessage('Catálogo guardado. Los cambios ya están disponibles para el menú.')
+    }
+  }
+
+  const visible = products.filter((p) => (showArchived || !p.archived) && (!category || category === p.categoria) && p.nombre.toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es")))
   return <section>
     {message && <p role="status" className="my-4 rounded-xl border border-orange-400 p-4">{message}</p>}
     <button className="my-3 underline disabled:opacity-50" disabled={busy} onClick={reload}>Recargar precios e historial</button>
     {busy && <p role="status">Procesando…</p>}
     {allowed && <>
+      {catalogEnabled && <>
+        <div className="my-4 flex flex-wrap gap-3">
+          <button type="button" className={button} disabled={busy || !categories.some(c => !c.archived)} onClick={() => openRecord('product')}>Nuevo producto</button>
+          <button type="button" className={button} disabled={busy} onClick={() => openRecord('category')}>Nueva categoría</button>
+        </div>
+        {!categories.some(c => !c.archived) && <p className="mb-4 text-orange-300">Creá o restaurá una categoría antes de agregar productos.</p>}
+        <details className="my-4 rounded-xl border border-zinc-700 p-4">
+          <summary className="cursor-pointer font-semibold">Administrar categorías</summary>
+          <div className="mt-4 space-y-3">{categories.map(c => <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-700 pb-3">
+            <div><p>{c.name}{c.archived ? ' · Archivada' : ''}</p><p className="text-sm text-zinc-400">Orden {c.sort_order} · {products.filter(p => p.categoryId === c.id && !p.archived).length} productos visibles</p></div>
+            <button type="button" className="text-orange-300 underline" disabled={busy} onClick={() => openRecord('category', c)} aria-label={`Editar categoría ${c.name}`}>Editar / archivar</button>
+          </div>)}</div>
+        </details>
+        <label className="mb-4 flex items-center gap-3"><input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} />Mostrar también productos archivados</label>
+      </>}
       <p className="mb-4 text-zinc-300">Cada presentación se modifica por separado. Los sánguches de media docena y docena mantienen el precio por sánguche.</p>
       {productImagesEnabled && <p className="mb-4 text-zinc-300">Las fotos se guardan por separado de los precios. Elegí una foto JPG, PNG o WebP: se reducirá automáticamente antes de subirla.</p>}
       <div className="mb-5 grid gap-3 sm:grid-cols-2">
@@ -204,7 +244,9 @@ function PriceEditor() {
       </div>
       <fieldset disabled={busy} className="space-y-3">
         {visible.map((p) => <div key={p.id} className="grid items-center gap-3 rounded-xl bg-zinc-800 p-4 sm:grid-cols-[1fr_12rem]">
-          <div><p className="font-semibold">{p.nombre}</p><p className="text-sm text-zinc-400">{p.categoria} · Actual: {money(p.precio)}</p></div>
+          <div><p className="font-semibold">{p.nombre}{p.archived ? ' · Archivado' : ''}</p><p className="text-sm text-zinc-400">{p.categoria} · Actual: {money(p.precio)}</p>
+            {catalogEnabled && <button type="button" className="mt-2 text-sm text-orange-300 underline" onClick={() => openRecord('product', p)} aria-label={`Editar producto ${p.nombre}`}>Editar / archivar producto</button>}
+          </div>
           <label className="text-sm">Nuevo precio ($)<input aria-label={`Precio de ${p.nombre}`} className={field} inputMode="numeric" value={drafts[p.id] ?? String(p.precio)} onChange={(e) => edit(p.id, e.target.value)} /></label>
           {productImagesEnabled && <ProductImageEditor product={p} disabled={busy} onSaved={(id, image) => setProducts((current) => current.map((product) => product.id === id ? { ...product, ...image } : product))} />}
         </div>)}
@@ -228,5 +270,6 @@ function PriceEditor() {
         </div>
       })}</div>
     </>}
+    {editing && <CatalogRecordForm key={`${editing.kind}:${editing.record?.id ?? 'new'}`} kind={editing.kind} record={editing.record} categories={categories} onClose={() => setEditing(null)} onSaved={catalogSaved} />}
   </section>
 }

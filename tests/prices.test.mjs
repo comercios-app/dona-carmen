@@ -29,5 +29,15 @@ test('carrito: actualiza importes y conserva cantidades para revisión', () => {
   assert.equal(result.items[0].cantidad * result.items[0].precio, 60)
   assert.equal(cart[0].precio, 10)
   assert.equal(reconcileCart(result.items, [{ id: 1, precio: 20 }]).changed, false)
-  assert.throws(() => reconcileCart(cart, []))
+  assert.deepEqual(reconcileCart(cart, []).items, [])
+  assert.equal(reconcileCart(cart, []).changed, true)
+})
+
+test('carrito: renombrados se revisan y productos archivados se quitan', () => {
+  const cart = [{ id: 1, nombre: 'Antes', precio: 10, cantidad: 2 }, { id: 2, nombre: 'Archivado', precio: 20, cantidad: 1 }]
+  const result = reconcileCart(cart, [{ id: 1, nombre: 'Ahora', precio: 10 }])
+  assert.equal(result.changed, true)
+  assert.equal(result.items[0].nombre, 'Ahora')
+  assert.equal(result.items[0].cantidad, 2)
+  assert.deepEqual(result.removed, ['Archivado'])
 })

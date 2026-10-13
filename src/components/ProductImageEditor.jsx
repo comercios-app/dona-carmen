@@ -37,7 +37,7 @@ export default function ProductImageEditor({ product, disabled, onSaved }) {
   }
 
   async function save(restore = false) {
-    if (restore && !window.confirm(`¿Volver a la foto original de ${product.nombre}?`)) return
+    if (restore && !window.confirm(product.hasOriginalImage === false ? `¿Quitar la foto de ${product.nombre}?` : `¿Volver a la foto original de ${product.nombre}?`)) return
     setBusy(true)
     setMessage("Guardando foto…")
     try {
@@ -63,7 +63,7 @@ export default function ProductImageEditor({ product, disabled, onSaved }) {
             <button type="button" disabled={disabled || busy} className={action} onClick={() => { setPrepared(null); setMessage("") }}>Cancelar foto</button>
           </div>
         </>}
-        {!prepared && product.imagePath && <button type="button" disabled={disabled || busy} className={action} onClick={() => save(true)}>Volver a la foto original</button>}
+        {!prepared && product.imagePath && <button type="button" disabled={disabled || busy} className={action} onClick={() => save(true)}>{product.hasOriginalImage === false ? "Quitar foto" : "Volver a la foto original"}</button>}
         {message && <p role="status" className="text-sm text-orange-300">{message}</p>}
       </div>
     </div>

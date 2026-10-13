@@ -99,5 +99,55 @@ test('Postgres: permisos, historial, conflictos, validación y guardado atómico
     await db.exec('reset role')
     await db.exec(await sql('02-prices.sql'))
     assert.equal((await db.query('select version from public.product_prices where id = 3')).rows[0].version, 3)
+    // Migración ABM: conserva los datos existentes y permite altas sin IDs manuales.
+    await db.exec(await sql('05-catalog.sql'))
+    await db.exec(await sql('05-catalog.sql'))
+    const catalog = async (all = false) => (await db.query('select public.get_catalog($1) as data', [all])).rows[0].data
+    const categorySave = async (input) => (await db.query('select public.save_catalog_category($1::jsonb) as id', [JSON.stringify(input)])).rows[0].id
+    const productSave = async (input) => (await db.query('select public.save_catalog_product($1::jsonb) as id', [JSON.stringify(input)])).rows[0].id
+    await db.exec('set role anon')
+    await db.query("select set_config('request.jwt.claim.sub', '', false)")
+    assert.equal((await catalog()).products.length, 41)
+    assert.equal((await catalog()).products.find(p => p.id === 3).version, 3)
+    await assert.rejects(catalog(true), /NOT_ADMIN/)
+    await assert.rejects(categorySave({}), /permission denied/)
+    await assert.rejects(productSave({}), /permission denied/)
+    await db.exec('reset role; set role authenticated')
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [other])
+    await assert.rejects(productSave({}), /NOT_ADMIN/)
+    await assert.rejects(catalog(true), /NOT_ADMIN/)
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [admin])
+    const categoryInput = { request_id: '10000000-0000-0000-0000-000000000001', name: 'Postres', sort_order: 5, archived: false }
+    const newCategory = await categorySave(categoryInput)
+    assert.equal(await categorySave(categoryInput), newCategory)
+    const productInput = { request_id: '10000000-0000-0000-0000-000000000002', name: 'Flan casero', category_id: newCategory, price: 4500, sort_order: 0, archived: false }
+    const newProduct = await productSave(productInput)
+    assert.ok(newProduct > 43)
+    assert.equal(await productSave(productInput), newProduct)
+    assert.equal((await catalog()).products.length, 42)
+    assert.equal((await catalog()).products.find(p => p.id === newProduct).image_version, 1)
+    const editCategory = { ...categoryInput, id: newCategory, expected_version: 1, archived: true }
+    await assert.rejects(categorySave(editCategory), /CATEGORY_HAS_PRODUCTS/)
+    const editProduct = { ...productInput, id: newProduct, name: 'Flan con dulce', price: 5000, expected_version: 1, expected_price_version: 1 }
+    await productSave(editProduct)
+    await assert.rejects(productSave(editProduct), /CATALOG_CONFLICT/)
+    assert.equal((await db.query('select * from public.price_history where product_id = $1', [newProduct])).rows[0].old_price, 4500)
+    await productSave({ ...editProduct, expected_version: 2, expected_price_version: 2, archived: true })
+    assert.equal((await catalog()).products.length, 41)
+    assert.equal((await catalog(true)).products.length, 42)
+    await categorySave(editCategory)
+    await assert.rejects(productSave({ ...editProduct, expected_version: 3, expected_price_version: 2 }), /CATEGORY_UNAVAILABLE/)
+    await categorySave({ ...editCategory, name: 'Dulces', archived: false, expected_version: 2 })
+    // Restaurar en otra categoría existente conserva su ID e historial.
+    await productSave({ ...editProduct, category_id: 2, expected_version: 3, expected_price_version: 2 })
+    assert.equal((await catalog()).products.find(p => p.id === newProduct).category_id, 2)
+    await assert.rejects(categorySave({ ...categoryInput, request_id: '10000000-0000-0000-0000-000000000003', name: 'DULCES' }), /duplicate key/)
+    await assert.rejects(productSave({ ...productInput, request_id: '10000000-0000-0000-0000-000000000004', price: 0 }), /INVALID_PRICE/)
+    await assert.rejects(db.exec('delete from public.catalog_products'), /permission denied/)
+    await db.exec('reset role')
+    // Reejecutar la migración no revierte nombres, precios ni productos nuevos.
+    await db.exec(await sql('05-catalog.sql'))
+    assert.equal((await catalog()).products.find(p => p.id === newProduct).name, 'Flan con dulce')
+    assert.equal((await catalog()).products.find(p => p.id === newProduct).price, 5000)
   } finally { await db.close() }
 })
