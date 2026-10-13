@@ -80,6 +80,7 @@ export default function Admin() {
       <a href={import.meta.env.BASE_URL} className="text-orange-300">← Volver al menú</a>
       <h1 className="mt-6 text-3xl font-bold">Productos de Doña Carmen</h1>
       <p className="mt-2 text-zinc-400">Administración</p>
+      <a className="mt-3 inline-block text-orange-300 underline" href={`${import.meta.env.BASE_URL}manual.html`} target="_blank" rel="noopener noreferrer">Manual de uso del panel</a>
       {notice && <p role="status" className="my-4 rounded-xl border border-orange-400 p-4">{notice}</p>}
       {!supabase ? <p className="mt-6">La administración todavía no está configurada.</p>
         : checking ? <p className="mt-6">Verificando acceso…</p>
